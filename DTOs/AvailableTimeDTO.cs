@@ -3,7 +3,6 @@
     public class AvailableTimeDTO
     {
         public string Time { get; set; } = string.Empty;
-        public int IsAvailable { get; set; }
-
+        public int AvailableSlots { get; set; }
     }
 }

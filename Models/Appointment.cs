@@ -20,7 +20,7 @@ namespace APIClinica.Models
         public DateTime Date { get; set; }
 
         [Required]
-        [RegularExpression(@"^(0[8-9]|1[0-7]):00$", ErrorMessage = "Time must be between 08:00 and 17:00")]
+        [RegularExpression(@"^(0[8-9]|1[0-7]):00$", ErrorMessage = "Hora entre 08:00 y 17:00")]
         public string Time { get; set; } = string.Empty;
 
         [Required]
