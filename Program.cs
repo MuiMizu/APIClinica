@@ -35,13 +35,27 @@ app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 
-
-using (var scope = app.Services.CreateScope())
+app.MapGet("/health", async (ClinicaDbContext db) =>
 {
-    var context = scope.ServiceProvider.GetRequiredService<ClinicaDbContext>();
-    context.Database.EnsureCreated();
-}
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("SELECT 1");
 
-
+        return Results.Ok(new
+        {
+            status = "healthy",
+            db = "ok",
+            timestamp = DateTime.UtcNow
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            detail: ex.Message,
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+})
+.WithName("Health")
+.WithTags("Health");
 
 app.Run();
