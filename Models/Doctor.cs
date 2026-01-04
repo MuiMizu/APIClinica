@@ -25,7 +25,6 @@ namespace APIClinica.Models
         public string? Email { get; set; }
 
         public bool Active { get; set; } = true;
-
         public ICollection<DoctorService> DoctorServices { get; set; } = new List<DoctorService>();
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }

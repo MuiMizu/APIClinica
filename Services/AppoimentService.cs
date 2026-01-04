@@ -2,6 +2,10 @@
 using APIClinica.Models;
 using APIClinica.Models.Enums;
 using APIClinica.Repositories;
+using APIClinica.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace APIClinica.Services
 {
@@ -10,15 +14,18 @@ namespace APIClinica.Services
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IDoctorRepository _doctorRepository;
         private readonly IRepository<Service> _serviceRepository;
+        private readonly ClinicaDbContext _context;
 
         public AppointmentService(
             IAppointmentRepository appointmentRepository,
             IDoctorRepository doctorRepository,
-            IRepository<Service> serviceRepository)
+            IRepository<Service> serviceRepository,
+            ClinicaDbContext context)
         {
             _appointmentRepository = appointmentRepository;
             _doctorRepository = doctorRepository;
             _serviceRepository = serviceRepository;
+            _context = context;
         }
 
         public async Task<List<AppointmentDTO>> GetAllAsync(DateTime? date = null, int? doctorId = null, int? patientId = null, AppointmentStatus? status = null)
@@ -35,6 +42,7 @@ namespace APIClinica.Services
                 appointments = await _appointmentRepository.GetAppointmentsByStatusAsync(status.Value);
             else
                 appointments = await _appointmentRepository.GetAppointmentsWithDetailsAsync();
+
 
             if (date.HasValue && appointments.Any())
                 appointments = appointments.Where(a => a.Date.Date == date.Value.Date);
@@ -94,58 +102,52 @@ namespace APIClinica.Services
         {
             var doctor = await _doctorRepository.GetDoctorWithServicesByIdAsync(dto.DoctorId);
             if (doctor == null || !doctor.Active)
-                throw new InvalidOperationException("Doctor no valido o no disponible");
+                throw new InvalidOperationException("Médico no encontrado o inactivo");
 
             var validTimes = new[] { "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00" };
             if (!validTimes.Contains(dto.Time))
-                throw new ArgumentException("Tiene que ser entre 08:00 y 17:00");
-
+                throw new ArgumentException("Hora inválida. Debe ser entre las 08:00 y las 17:00");
 
             if (dto.Date.Date < DateTime.Today)
-                throw new ArgumentException("Ingrese una fecha valida");
+                throw new ArgumentException("No se pueden crear citas en el pasado");
 
-
-            var maxAttempts = 2;
-            var attempt = 0;
-
-            while (attempt < maxAttempts)
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
+            try
             {
-                try
+                var existingAppointments = await _appointmentRepository
+                    .CountAppointmentsByDoctorAndTimeAsync(dto.DoctorId, dto.Date, dto.Time);
+
+                if (existingAppointments >= 2)
                 {
-                    var existingAppointments = await _appointmentRepository
-                        .CountAppointmentsByDoctorAndTimeAsync(dto.DoctorId, dto.Date, dto.Time);
-
-                    if (existingAppointments >= 2)
-                    {
-                        throw new InvalidOperationException("No hay cupos disponibles");
-                    }
-
-                    var appointment = new Appointment
-                    {
-                        PatientId = dto.PatientId,
-                        DoctorId = dto.DoctorId,
-                        Date = dto.Date.Date,
-                        Time = dto.Time,
-                        Status = AppointmentStatus.Scheduled
-                    };
-
-                    await _appointmentRepository.AddAsync(appointment);
-                    await _appointmentRepository.SaveChangesAsync();
-
-                    return await GetByIdAsync(appointment.Id) ?? throw new Exception("No se pudo crear la cita");
+                    await transaction.RollbackAsync();
+                    throw new InvalidOperationException("No hay turnos disponibles en este horario");
                 }
-                catch (Exception ex) when (ex.Message.Contains("UX_Appointments_SlotPerHour"))
+
+                var appointment = new Appointment
                 {
-                    attempt++;
-                    if (attempt >= maxAttempts)
-                    {
-                        throw new InvalidOperationException("No hay cupos a disponibles a esta hora.");
-                    }
-                    await Task.Delay(100);
-                }
+                    PatientId = dto.PatientId,
+                    DoctorId = dto.DoctorId,
+                    Date = dto.Date.Date,
+                    Time = dto.Time,
+                    Status = AppointmentStatus.Scheduled
+                };
+
+                await _appointmentRepository.AddAsync(appointment);
+                await _appointmentRepository.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return await GetByIdAsync(appointment.Id) ?? throw new Exception("Error al crear la cita");
             }
-
-            throw new InvalidOperationException("No se pudo crear la cita");
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<bool> UpdateStatusAsync(int id, AppointmentStatus status)
@@ -162,9 +164,7 @@ namespace APIClinica.Services
 
         public async Task<List<AvailableDoctorDTO>> GetAvailableDoctorsAsync(int serviceId, DateTime date)
         {
-
             var doctors = await _doctorRepository.GetDoctorsByServiceAsync(serviceId);
-
             var availableDoctors = new List<AvailableDoctorDTO>();
 
             foreach (var doctor in doctors)
@@ -179,7 +179,6 @@ namespace APIClinica.Services
                     .Select(g => new { Time = g.Key, Count = g.Count() })
                     .ToList();
 
-
                 var occupiedHours = appointmentsByTime.Where(a => a.Count >= 2).Count();
                 var totalHours = 10;
 
@@ -187,10 +186,10 @@ namespace APIClinica.Services
                 {
                     availableDoctors.Add(new AvailableDoctorDTO
                     {
-                    Id = doctor.Id,
-                    FirstName = doctor.FirstName,
-                    LastName = doctor.LastName,
-                    Specialty = doctor.Specialty
+                        Id = doctor.Id,
+                        FirstName = doctor.FirstName,
+                        LastName = doctor.LastName,
+                        Specialty = doctor.Specialty
                     });
                 }
             }
