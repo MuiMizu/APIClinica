@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using APIClinica.Repositories;
 using APIClinica.Models;
 
@@ -6,6 +7,7 @@ namespace APIClinica.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ServicesController : ControllerBase
     {
         private readonly IRepository<Service> _serviceRepository;

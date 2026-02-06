@@ -49,9 +49,9 @@ namespace APIClinica.Repositories
         {
             return await _dbSet
                 .CountAsync(a => a.DoctorId == doctorId &&
-                                a.Date.Date == date.Date &&
-                                a.Time == time &&
-                                a.Status == AppointmentStatus.Scheduled);
+                a.Date.Date == date.Date &&
+                a.Time == time &&
+                a.Status == AppointmentStatus.Scheduled);
         }
     }
 }

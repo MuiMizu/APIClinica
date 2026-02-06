@@ -1,15 +1,14 @@
 ﻿using APIClinica.DTOs;
 using APIClinica.Models;
 using APIClinica.Repositories;
+using APIClinica.Help;
 using System;
 
 namespace APIClinica.Services
-{
-    public class PatientService : IPatientService
+{ public class PatientService : IPatientService
     {
         private readonly IPatientRepository _patientRepository;
         private readonly IRepository<Insurance> _insuranceRepository;
-
         public PatientService(
             IPatientRepository patientRepository,
             IRepository<Insurance> insuranceRepository)
@@ -55,7 +54,6 @@ namespace APIClinica.Services
 
             return (items, totalItems, page, totalPages);
         }
-
         public async Task<PatientDTO?> GetByIdAsync(int id)
         {
             var patient = await _patientRepository.GetPatientWithInsuranceByIdAsync(id);
@@ -74,12 +72,18 @@ namespace APIClinica.Services
                 InsuranceName = patient.Insurance?.Name ?? string.Empty
             };
         }
-
         public async Task<PatientDTO> CreateAsync(CreatePatientDTO dto)
         {
+            if (!Validation.IsOnlyLetters(dto.FirstName))
+                throw new ArgumentException("Nombre solo debe tener letras");
+            if (!Validation.IsOnlyLetters(dto.LastName))
+                throw new ArgumentException("Apellido solo debe tener letras");
+            if (!string.IsNullOrWhiteSpace(dto.Phone) && !Validation.IsOnlyDigits(dto.Phone))
+                throw new ArgumentException("Telefono solo debe tener numeros");
+
             var insurance = await _insuranceRepository.GetByIdAsync(dto.InsuranceId);
             if (insurance == null || !insurance.Active)
-                throw new ArgumentException("Insurance not found or inactive");
+                throw new ArgumentException("Seguro no encontrado");
 
             var patient = new Patient
             {
@@ -94,18 +98,23 @@ namespace APIClinica.Services
             await _patientRepository.AddAsync(patient);
             await _patientRepository.SaveChangesAsync();
 
-            return await GetByIdAsync(patient.Id) ?? throw new Exception("Error creating patient");
+            return await GetByIdAsync(patient.Id) ?? throw new Exception("Error al crear paciente");
         }
-
         public async Task<PatientDTO> UpdateAsync(int id, CreatePatientDTO dto)
         {
             var patient = await _patientRepository.GetByIdAsync(id);
             if (patient == null)
-                throw new KeyNotFoundException("Patient not found");
+                throw new KeyNotFoundException("Paciente no encontrado");
+            if (!Validation.IsOnlyLetters(dto.FirstName))
+                throw new ArgumentException("Nombre solo debe tener letras");
+            if (!Validation.IsOnlyLetters(dto.LastName))
+                throw new ArgumentException("Apellido solo debe tener letras");
+            if (!string.IsNullOrWhiteSpace(dto.Phone) && !Validation.IsOnlyDigits(dto.Phone))
+                throw new ArgumentException("Telefono solo debe tener numeros");
 
             var insurance = await _insuranceRepository.GetByIdAsync(dto.InsuranceId);
             if (insurance == null || !insurance.Active)
-                throw new ArgumentException("Insurance not found or inactive");
+                throw new ArgumentException("Seguro no encontrado");
 
             patient.FirstName = dto.FirstName;
             patient.LastName = dto.LastName;
@@ -117,9 +126,8 @@ namespace APIClinica.Services
             _patientRepository.Update(patient);
             await _patientRepository.SaveChangesAsync();
 
-            return await GetByIdAsync(id) ?? throw new Exception("Error updating patient");
+            return await GetByIdAsync(id) ?? throw new Exception("Error al actualizar paciente");
         }
-
         public async Task<bool> DeleteAsync(int id)
         {
             var patient = await _patientRepository.GetByIdAsync(id);

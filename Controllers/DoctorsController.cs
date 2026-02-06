@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using APIClinica.Services;
 
 namespace APIClinica.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class DoctorsController : ControllerBase
     {
         private readonly IAppointmentService _appointmentService;

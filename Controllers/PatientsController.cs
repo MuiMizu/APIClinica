@@ -37,7 +37,7 @@ namespace APIClinica.Controllers
             return Ok(patient);
         }
 
-        [HttpPost]
+        [HttpPost]  
         public async Task<ActionResult<PatientDTO>> Create([FromBody] CreatePatientDTO dto)
         {
             try

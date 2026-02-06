@@ -8,18 +8,18 @@ namespace APIClinica.Models
         public int Id { get; set; }
 
         [Required]
-        [StringLength(100)]
+        [StringLength(32)]
         public string FirstName { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(100)]
+        [StringLength(32)]
         public string LastName { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(20)]
+        [StringLength(16)]
         public string Document { get; set; } = string.Empty;
 
-        [StringLength(20)]
+        [StringLength(10)]
         public string? Phone { get; set; }
 
         [StringLength(100)]
@@ -33,5 +33,6 @@ namespace APIClinica.Models
         public Insurance Insurance { get; set; } = null!;
 
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using APIClinica.Services;
 using APIClinica.DTOs;
 using APIClinica.Models.Enums;
@@ -7,6 +8,7 @@ namespace APIClinica.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AppointmentsController : ControllerBase
     {
         private readonly IAppointmentService _service;
