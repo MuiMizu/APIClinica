@@ -13,7 +13,6 @@ namespace APIClinica.Repositories
         public async Task<IEnumerable<Doctor>> GetActiveDoctorsAsync()
         {
             return await _dbSet
-                .Where(d => d.Active)
                 .ToListAsync();
         }
 
@@ -29,7 +28,7 @@ namespace APIClinica.Repositories
         {
             return await _dbSet
                 .Include(d => d.DoctorServices)
-                .Where(d => d.Active && d.DoctorServices.Any(ds => ds.ServiceId == serviceId))
+                .Where(d => d.DoctorServices.Any(ds => ds.ServiceId == serviceId))
                 .ToListAsync();
         }
     }
