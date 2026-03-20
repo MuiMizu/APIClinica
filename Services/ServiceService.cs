@@ -80,9 +80,7 @@ namespace APIClinica.Services
             var service = await _serviceRepository.GetByIdAsync(id);
             if (service == null) return false;
 
-            // Soft delete
-            service.Active = false;
-            _serviceRepository.Update(service);
+            _serviceRepository.Remove(service);
             await _serviceRepository.SaveChangesAsync();
             return true;
         }
