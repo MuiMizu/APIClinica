@@ -1,4 +1,4 @@
-﻿using APIClinica.Models;
+using APIClinica.Models;
 using APIClinica.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Numerics;
@@ -44,6 +44,11 @@ namespace APIClinica.Data
                 .IsUnique()
                 .HasFilter("[Status] = 0");
             });
+
+            modelBuilder.Entity<Patient>().HasQueryFilter(p => p.Active);
+            modelBuilder.Entity<Doctor>().HasQueryFilter(d => d.Active);
+            modelBuilder.Entity<Service>().HasQueryFilter(s => s.Active);
+            modelBuilder.Entity<Insurance>().HasQueryFilter(i => i.Active);
 
             modelBuilder.Entity<Insurance>().HasData(
                 new Insurance { Id = 1, Name = "Seguro A", Description = "Seguro Basico", Active = true },

@@ -1,7 +1,8 @@
-﻿using APIClinica.DTOs;
+using APIClinica.DTOs;
 using APIClinica.Models;
 using APIClinica.Repositories;
 using APIClinica.Help;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace APIClinica.Services
@@ -9,12 +10,16 @@ namespace APIClinica.Services
     {
         private readonly IPatientRepository _patientRepository;
         private readonly IRepository<Insurance> _insuranceRepository;
+        private readonly IAppointmentRepository _appointmentRepository;
+
         public PatientService(
             IPatientRepository patientRepository,
-            IRepository<Insurance> insuranceRepository)
+            IRepository<Insurance> insuranceRepository,
+            IAppointmentRepository appointmentRepository)
         {
             _patientRepository = patientRepository;
             _insuranceRepository = insuranceRepository;
+            _appointmentRepository = appointmentRepository;
         }
 
         public async Task<(List<PatientDTO> Items, int TotalItems, int CurrentPage, int TotalPages)>
@@ -48,7 +53,8 @@ namespace APIClinica.Services
                     Phone = p.Phone,
                     Email = p.Email,
                     InsuranceId = p.InsuranceId,
-                    InsuranceName = p.Insurance?.Name ?? string.Empty
+                    InsuranceName = p.Insurance?.Name ?? string.Empty,
+                    HasAppointments = p.Appointments != null && p.Appointments.Any()
                 })
                 .ToList();
 
@@ -69,7 +75,8 @@ namespace APIClinica.Services
                 Phone = patient.Phone,
                 Email = patient.Email,
                 InsuranceId = patient.InsuranceId,
-                InsuranceName = patient.Insurance?.Name ?? string.Empty
+                InsuranceName = patient.Insurance?.Name ?? string.Empty,
+                HasAppointments = patient.Appointments != null && patient.Appointments.Any()
             };
         }
         public async Task<PatientDTO> CreateAsync(CreatePatientDTO dto)
@@ -79,11 +86,20 @@ namespace APIClinica.Services
             if (!Validation.IsOnlyLetters(dto.LastName))
                 throw new ArgumentException("Apellido solo debe tener letras");
             if (!string.IsNullOrWhiteSpace(dto.Phone) && !Validation.IsOnlyDigits(dto.Phone))
-                throw new ArgumentException("Telefono solo debe tener numeros");
+                throw new ArgumentException("Teléfono solo debe tener números");
+
+            if (await _patientRepository.GetQueryable().AnyAsync(p => p.Document == dto.Document && p.Active))
+            {
+                throw new InvalidOperationException("Ya existe un paciente activo con este número de documento");
+            }
+            if (!string.IsNullOrWhiteSpace(dto.Email) && await _patientRepository.GetQueryable().AnyAsync(p => p.Email == dto.Email && p.Active))
+            {
+                throw new InvalidOperationException("Ya existe un paciente activo con este correo electrónico");
+            }
 
             var insurance = await _insuranceRepository.GetByIdAsync(dto.InsuranceId);
             if (insurance == null || !insurance.Active)
-                throw new ArgumentException("Seguro no encontrado");
+                throw new ArgumentException("Seguro no encontrado o inactivo");
 
             var patient = new Patient
             {
@@ -92,7 +108,8 @@ namespace APIClinica.Services
                 Document = dto.Document,
                 Phone = dto.Phone,
                 Email = dto.Email,
-                InsuranceId = dto.InsuranceId
+                InsuranceId = dto.InsuranceId,
+                Active = true
             };
 
             await _patientRepository.AddAsync(patient);
@@ -134,7 +151,14 @@ namespace APIClinica.Services
             if (patient == null)
                 return false;
 
-            _patientRepository.Remove(patient);
+            var hasAppointments = await _appointmentRepository.ExistsAsync(a => a.PatientId == id);
+            if (hasAppointments)
+            {
+                throw new InvalidOperationException("No se puede eliminar un paciente que tiene citas asignadas");
+            }
+
+            patient.Active = false;
+            _patientRepository.Update(patient);
             await _patientRepository.SaveChangesAsync();
             return true;
         }

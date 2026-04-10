@@ -4,6 +4,7 @@ using APIClinica.Repositories;
 using APIClinica.Models;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace APIClinica.Controllers
 {
@@ -13,17 +14,28 @@ namespace APIClinica.Controllers
     public class InsurancesController : ControllerBase
     {
         private readonly IRepository<Insurance> _insuranceRepository;
+        private readonly IRepository<Patient> _patientRepository;
 
-        public InsurancesController(IRepository<Insurance> insuranceRepository)
+        public InsurancesController(IRepository<Insurance> insuranceRepository, IRepository<Patient> patientRepository)
         {
             _insuranceRepository = insuranceRepository;
+            _patientRepository = patientRepository;
         }
 
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
-            var insurances = await _insuranceRepository.FindAsync(i => i.Active);
-            var result = insurances.Select(i => new { i.Id, i.Name, i.Description });
+            var insurances = await _insuranceRepository.GetQueryable()
+                .Include(i => i.Patients)
+                .Where(i => i.Active)
+                .ToListAsync();
+
+            var result = insurances.Select(i => new { 
+                i.Id, 
+                i.Name, 
+                i.Description,
+                IsAssignedToPatients = i.Patients != null && i.Patients.Any()
+            });
             return Ok(result);
         }
 
@@ -38,6 +50,14 @@ namespace APIClinica.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(CreateInsuranceDTO dto)
         {
+            if (await _insuranceRepository.GetQueryable().AnyAsync(i => i.Name == dto.Name && i.Active))
+            {
+                return Conflict(new { message = "Ya existe un seguro activo con este nombre" });
+            }
+
+            if (!APIClinica.Help.Validation.IsSafeDescription(dto.Description))
+                return BadRequest(new { message = "La descripción contiene caracteres no permitidos" });
+
             var insurance = new Insurance
             {
                 Name = dto.Name,
@@ -55,6 +75,9 @@ namespace APIClinica.Controllers
             var insurance = await _insuranceRepository.GetByIdAsync(id);
             if (insurance == null) return NotFound();
 
+            if (!APIClinica.Help.Validation.IsSafeDescription(dto.Description))
+                return BadRequest(new { message = "La descripción contiene caracteres no permitidos" });
+            
             insurance.Name = dto.Name;
             insurance.Description = dto.Description;
 
@@ -68,6 +91,13 @@ namespace APIClinica.Controllers
         {
             var insurance = await _insuranceRepository.GetByIdAsync(id);
             if (insurance == null) return NotFound();
+
+            // Constraint: No dejar borrar un Seguro si Esta Asignado a un paciente
+            var isAssignedToPatient = await _patientRepository.ExistsAsync(p => p.InsuranceId == id);
+            if (isAssignedToPatient)
+            {
+                return BadRequest(new { message = "No se puede eliminar un seguro que está asignado a uno o más pacientes" });
+            }
 
             insurance.Active = false;
             _insuranceRepository.Update(insurance);

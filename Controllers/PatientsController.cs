@@ -1,4 +1,4 @@
-﻿using APIClinica.DTOs;
+using APIClinica.DTOs;
 using APIClinica.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,33 +42,15 @@ namespace APIClinica.Controllers
         [HttpPost]  
         public async Task<ActionResult<PatientDTO>> Create([FromBody] CreatePatientDTO dto)
         {
-            try
-            {
-                var patient = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = patient.Id }, patient);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var patient = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = patient.Id }, patient);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<PatientDTO>> Update(int id, [FromBody] CreatePatientDTO dto)
         {
-            try
-            {
-                var patient = await _service.UpdateAsync(id, dto);
-                return Ok(patient);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var patient = await _service.UpdateAsync(id, dto);
+            return Ok(patient);
         }
 
         [HttpDelete("{id}")]

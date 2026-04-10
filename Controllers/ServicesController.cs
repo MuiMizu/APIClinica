@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using APIClinica.Repositories;
 using APIClinica.Models;
+using APIClinica.Services;
+
 
 using APIClinica.DTOs;
 
@@ -12,66 +14,47 @@ namespace APIClinica.Controllers
     [Authorize]
     public class ServicesController : ControllerBase
     {
-        private readonly IRepository<Service> _serviceRepository;
+        private readonly IServiceService _service;
 
-        public ServicesController(IRepository<Service> serviceRepository)
+        public ServicesController(IServiceService service)
         {
-            _serviceRepository = serviceRepository;
+            _service = service;
         }
 
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
-            var services = await _serviceRepository.FindAsync(s => s.Active);
-            var result = services.Select(s => new { s.Id, s.Name, s.Description });
-            return Ok(result);
+            var services = await _service.GetAllAsync();
+            return Ok(services);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult> GetById(int id)
         {
-            var service = await _serviceRepository.GetByIdAsync(id);
+            var service = await _service.GetByIdAsync(id);
             if (service == null) return NotFound();
-            return Ok(new { service.Id, service.Name, service.Description });
+            return Ok(service);
         }
 
         [HttpPost]
         public async Task<ActionResult> Create(CreateServiceDTO dto)
         {
-            var service = new Service
-            {
-                Name = dto.Name,
-                Description = dto.Description,
-                Active = true
-            };
-            await _serviceRepository.AddAsync(service);
-            await _serviceRepository.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = service.Id }, new { service.Id, service.Name, service.Description });
+            var service = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = service.Id }, service);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(int id, CreateServiceDTO dto)
         {
-            var service = await _serviceRepository.GetByIdAsync(id);
-            if (service == null) return NotFound();
-
-            service.Name = dto.Name;
-            service.Description = dto.Description;
-
-            _serviceRepository.Update(service);
-            await _serviceRepository.SaveChangesAsync();
+            await _service.UpdateAsync(id, dto);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-            var service = await _serviceRepository.GetByIdAsync(id);
-            if (service == null) return NotFound();
-
-            service.Active = false;
-            _serviceRepository.Update(service);
-            await _serviceRepository.SaveChangesAsync();
+            var result = await _service.DeleteAsync(id);
+            if (!result) return NotFound();
             return NoContent();
         }
     }

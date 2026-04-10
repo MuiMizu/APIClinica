@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using APIClinica.Data;
 using APIClinica.Models;
 
@@ -16,11 +16,20 @@ namespace APIClinica.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Doctor>> GetAllWithServicesAsync()
+        {
+            return await _dbSet
+                .Include(d => d.DoctorServices)
+                .Include(d => d.Appointments)
+                .ToListAsync();
+        }
+
         public async Task<Doctor?> GetDoctorWithServicesByIdAsync(int id)
         {
             return await _dbSet
                 .Include(d => d.DoctorServices)
                     .ThenInclude(ds => ds.Service)
+                .Include(d => d.Appointments)
                 .FirstOrDefaultAsync(d => d.Id == id);
         }
 

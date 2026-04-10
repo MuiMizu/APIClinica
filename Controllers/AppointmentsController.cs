@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using APIClinica.Services;
 using APIClinica.DTOs;
@@ -41,23 +41,8 @@ namespace APIClinica.Controllers
         [HttpPost]
         public async Task<ActionResult<AppointmentDTO>> Create([FromBody] CreateAppointmentDTO dto)
         {
-            try
-            {
-                var appointment = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = appointment.Id }, appointment);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            var appointment = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = appointment.Id }, appointment);
         }
 
         [HttpPatch("{id}/status")]

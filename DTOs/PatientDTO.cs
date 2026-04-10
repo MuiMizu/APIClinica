@@ -1,4 +1,4 @@
-﻿namespace APIClinica.DTOs
+namespace APIClinica.DTOs
 {
     public class PatientDTO
     {
@@ -10,6 +10,7 @@
         public string? Email { get; set; }
         public int InsuranceId { get; set; }
         public string? InsuranceName { get; set; }
+        public bool HasAppointments { get; set; }
     }
 
     public class CreatePatientDTO

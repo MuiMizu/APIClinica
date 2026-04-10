@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using APIClinica.Data;
 using APIClinica.Models;
 
@@ -14,6 +14,7 @@ namespace APIClinica.Repositories
         {
             return await _dbSet
                 .Include(p => p.Insurance)
+                .Include(p => p.Appointments)
                 .ToListAsync();
         }
 
@@ -21,6 +22,7 @@ namespace APIClinica.Repositories
         {
             return await _dbSet
                 .Include(p => p.Insurance)
+                .Include(p => p.Appointments)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
@@ -28,6 +30,7 @@ namespace APIClinica.Repositories
         {
             return await _dbSet
                 .Include(p => p.Insurance)
+                .Include(p => p.Appointments)
                 .Where(p => p.FirstName.Contains(searchTerm) ||
                 p.LastName.Contains(searchTerm) ||
                 p.Document.Contains(searchTerm))

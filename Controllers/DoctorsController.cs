@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using APIClinica.Services;
 using APIClinica.DTOs;
 
@@ -41,15 +41,8 @@ namespace APIClinica.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(int id, [FromBody] CreateDoctorDTO dto)
         {
-            try
-            {
-                await _service.UpdateAsync(id, dto);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+            await _service.UpdateAsync(id, dto);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]

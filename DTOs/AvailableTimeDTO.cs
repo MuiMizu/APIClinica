@@ -1,4 +1,4 @@
-﻿namespace APIClinica.DTOs
+namespace APIClinica.DTOs
 {
     public class AvailableTimeDTO
     {
@@ -15,6 +15,8 @@
         public string? Phone { get; set; }
         public string? Email { get; set; }
         public bool Active { get; set; }
+        public bool HasAppointments { get; set; }
+        public List<int> ServiceIds { get; set; } = new List<int>();
     }
 
     public class CreateDoctorDTO
@@ -24,5 +26,6 @@
         public string? Specialty { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
+        public List<int> ServiceIds { get; set; } = new List<int>();
     }
 }

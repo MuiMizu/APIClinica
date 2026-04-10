@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace APIClinica.Models
@@ -32,7 +32,7 @@ namespace APIClinica.Models
         [ForeignKey(nameof(InsuranceId))]
         public Insurance Insurance { get; set; } = null!;
 
+        public bool Active { get; set; } = true;
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
-
     }
 }
