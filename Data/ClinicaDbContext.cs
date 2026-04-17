@@ -15,6 +15,9 @@ namespace APIClinica.Data
         public DbSet<Doctor> Doctors { get; set; }
         public DbSet<DoctorService> DoctorServices { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +37,11 @@ namespace APIClinica.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => new { e.DoctorId, e.ServiceId }).IsUnique();
+            });
+
+            modelBuilder.Entity<UserRole>(entity =>
+            {
+                entity.HasKey(ur => new { ur.UserId, ur.RoleId });
             });
 
             modelBuilder.Entity<Appointment>(entity =>

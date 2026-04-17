@@ -90,11 +90,11 @@ namespace APIClinica.Services
 
             if (await _patientRepository.GetQueryable().AnyAsync(p => p.Document == dto.Document && p.Active))
             {
-                throw new InvalidOperationException("Ya existe un paciente activo con este número de documento");
+                throw new InvalidOperationException("Ya existe un paciente con este número de documento");
             }
             if (!string.IsNullOrWhiteSpace(dto.Email) && await _patientRepository.GetQueryable().AnyAsync(p => p.Email == dto.Email && p.Active))
             {
-                throw new InvalidOperationException("Ya existe un paciente activo con este correo electrónico");
+                throw new InvalidOperationException("Ya existe un paciente con este correo electrónico");
             }
 
             var insurance = await _insuranceRepository.GetByIdAsync(dto.InsuranceId);

@@ -1,4 +1,4 @@
-using APIClinica.DTOs;
+    using APIClinica.DTOs;
 using APIClinica.Models;
 using APIClinica.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -87,7 +87,7 @@ namespace APIClinica.Services
         public async Task UpdateAsync(int id, CreateServiceDTO dto)
         {
             var service = await _serviceRepository.GetByIdAsync(id);
-            if (service == null) throw new KeyNotFoundException("Service not found");
+            if (service == null) throw new KeyNotFoundException("Servicio no encontrado");
 
             if (!APIClinica.Help.Validation.IsSafeDescription(dto.Description))
                 throw new ArgumentException("No agregar caracteres especiales en descripcion");

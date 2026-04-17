@@ -22,7 +22,7 @@ namespace APIClinica.Middleware
                 
                 if (context.Response.StatusCode == (int)HttpStatusCode.Unauthorized && !context.Response.HasStarted)
                 {
-                    await HandleCustomManualError(context, "No autorizado. Token inválido o ausente.", (int)HttpStatusCode.Unauthorized);
+                    await HandleCustomManualError(context, "Token inválido o ausente.", (int)HttpStatusCode.Unauthorized);
                 }
             }
             catch (Exception ex)

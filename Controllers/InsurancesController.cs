@@ -52,7 +52,7 @@ namespace APIClinica.Controllers
         {
             if (await _insuranceRepository.GetQueryable().AnyAsync(i => i.Name == dto.Name && i.Active))
             {
-                return Conflict(new { message = "Ya existe un seguro activo con este nombre" });
+                return Conflict(new { message = "Ya existe un seguro con este nombre" });
             }
 
             if (!APIClinica.Help.Validation.IsSafeDescription(dto.Description))
@@ -92,7 +92,6 @@ namespace APIClinica.Controllers
             var insurance = await _insuranceRepository.GetByIdAsync(id);
             if (insurance == null) return NotFound();
 
-            // Constraint: No dejar borrar un Seguro si Esta Asignado a un paciente
             var isAssignedToPatient = await _patientRepository.ExistsAsync(p => p.InsuranceId == id);
             if (isAssignedToPatient)
             {

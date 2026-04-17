@@ -106,7 +106,7 @@ namespace APIClinica.Services
 
             var validTimes = new[] { "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00" };
             if (!validTimes.Contains(dto.Time))
-                throw new ArgumentException("Hora inválida. Debe ser entre las 08:00 y las 17:00");
+                throw new ArgumentException("Hora inválida, debe ser entre las 08:00 y las 17:00");
 
             if (dto.Date.Date < DateTime.Today)
                 throw new ArgumentException("No se pueden crear citas en el pasado");
